@@ -58,8 +58,8 @@
 
     - role: mastodon
       vars:
-        mastodon_postgresql_name: mastodon
-        mastodon_postgresql_password: demoInsecurePassword
+        mastodon_postgresql_name: "{{ db_name }}"
+        mastodon_postgresql_password: "{{ db_password }}"
         mastodon_ruby_path: "{{ rbenv_root }}/shims"
         mastodon_yarn_path: "{{ npm_config_prefix }}/bin"
         # 以下、ハンズオン専用SMTPサーバ情報。期間外は利用不可。
