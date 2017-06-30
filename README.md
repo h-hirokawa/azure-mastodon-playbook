@@ -44,6 +44,11 @@ cd azure-mastodon-playbook
 
 ### 2. Ansibleをインストールする
 リポジトリに含まれている `install_ansible.sh` スクリプトを使ってAnsibleをインストールしましょう。これを用いると必要な依存関係も含めてAnsibleをインストールすることができます。
+
+```bash
+./install_ansible.sh
+```
+
 中で `sudo` を実行しているので、パスワードを聞かれた場合は手で入力してください。
 
 ```bash
