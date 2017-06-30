@@ -1,0 +1,11 @@
+---
+azure_cli_venv_dir: ~/venv/azure-cli
+azure_cli: "{{ azure_cli_venv_dir }}/bin/python -m azure.cli"
+
+azure_resource_group_name:
+azure_availability_set_name:
+azure_vm_name:
+
+azure_vm_image: ubuntults
+azure_vm_size: Standard_DS2_v2
+azure_region: japaneast

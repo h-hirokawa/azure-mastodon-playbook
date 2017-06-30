@@ -1,0 +1,15 @@
+---
+- src: geerlingguy.postgresql
+  version: 1.3.0
+
+- src: geerlingguy.redis
+  version: 1.5.1
+
+- src: geerlingguy.nodejs
+  version: 4.1.1
+
+- src: geerlingguy.nginx
+  version: 2.3.2
+
+- src: zzet.rbenv
+  version: 3.3.1

@@ -1,0 +1,30 @@
+---
+mastodon_version: v1.4.6
+
+mastodon_git_repo: https://github.com/tootsuite/mastodon.git
+
+mastodon_local_domain: "{{ ansible_host }}"
+mastodon_local_https: false
+
+mastodon_redis_host: 127.0.0.1
+mastodon_redis_port: 6379
+
+mastodon_postgresql_host: 127.0.0.1
+mastodon_postgresql_user: mastodon
+mastodon_postgresql_name: mastodon
+mastodon_postgresql_password: ""
+mastodon_postgresql_port: 5432
+
+mastodon_smtp_server: ""
+mastodon_smtp_port: 587
+mastodon_smtp_login: ""
+mastodon_smtp_password: ""
+mastodon_smtp_from_address: notifications@localhost.localdomain
+
+mastodon_ruby_path: /usr/local/rbenv/shims
+mastodon_yarn_path: /usr/local/lib/npm/bin
+mastodon_npm_dir: /usr/bin
+
+mastodon_user_name: mastodon
+mastodon_user_home: /home/{{ mastodon_user_name }}
+mastodon_directory: /home/{{ mastodon_user_name }}/live

@@ -1,0 +1,16 @@
+[Unit]
+Description=mastodon-sidekiq
+After=network.target
+
+[Service]
+Type=simple
+User={{ mastodon_user_name }}
+WorkingDirectory={{ mastodon_directory }}
+Environment="RAILS_ENV=production"
+Environment="DB_POOL=5"
+ExecStart={{ mastodon_ruby_path }}/bundle exec sidekiq -c 5 -q default -q mailers -q pull -q push
+TimeoutSec=15
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

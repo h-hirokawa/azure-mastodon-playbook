@@ -1,0 +1,97 @@
+---
+# 公式ドキュメント: https://github.com/tootsuite/documentation/blob/master/Running-Mastodon/Production-guide.md
+- block:
+    - name: mastodon実行用ユーザーを作成
+      user:
+        name: "{{ mastodon_user_name }}"
+        home: "{{ mastodon_user_home }}"
+        system: true
+        shell: /bin/false
+
+    - name: 依存パッケージをAptでインストール
+      apt:
+        name:
+          - imagemagick
+          - ffmpeg
+          - libpq-dev
+          - libxml2-dev
+          - libxslt1-dev
+          - file
+          - git
+          - curl
+          - g++
+          - libprotobuf-dev
+          - protobuf-compiler
+          - pkg-config
+
+    - name: Bundlerをインストール
+      gem:
+        name: bundler
+        user_install: false
+        executable: "{{ mastodon_ruby_path }}/gem"
+  become: true
+  become_user: root
+
+- block:
+    - name: Mastodonリポジトリをクローン
+      git:
+        dest: "{{ mastodon_directory }}"
+        repo: "{{ mastodon_git_repo }}"
+        version: "{{ mastodon_version }}"
+      register: clone_mastodon_repo
+
+    - name: Rubyパッケージをインストール
+      bundler:
+        chdir: "{{ mastodon_directory }}"
+        deployment_mode: true
+        exclude_groups:
+          - development
+          - test
+        executable: "{{ mastodon_ruby_path }}/bundle"
+
+    - name: Nodeパッケージをインストール
+      command: "{{ mastodon_yarn_path }}/yarn install --pure-lockfile"
+      args:
+        chdir: "{{ mastodon_directory }}"
+      register: install_yarn_packages
+      changed_when: "'Already up-to-date.' not in install_yarn_packages.stdout"
+
+    - name: 設定ファイルを配置
+      template:
+        src: env.production
+        dest: "{{ mastodon_directory }}/.env.production"
+      register: set_production_config
+
+    - name: DBをマイグレート
+      command: bundle exec rails db:migrate
+      args:
+        chdir: "{{ mastodon_directory }}"
+      register: migrate_db
+      changed_when: migrate_db.stdout
+
+    - name: 初回実行時のみ初期データ投入
+      shell: bundle exec rails db:seed && touch ~/.mastodon_already_seeded
+      args:
+        chdir: "{{ mastodon_directory }}"
+        creates: ~/.mastodon_already_seeded
+
+    - name: CSSとJavaScriptをコンパイル
+      command: bundle exec rails assets:precompile
+      args:
+        chdir: "{{ mastodon_directory }}"
+      when: clone_mastodon_repo.changed
+  environment:
+    RAILS_ENV: production
+    PATH: "{{ mastodon_ruby_path }}:{{ mastodon_yarn_path }}:{{ ansible_env.PATH }}"
+  become: true
+  become_user: "{{ mastodon_user_name }}"
+
+- include: start_service.yml
+  become: true
+  become_user: root
+  with_items:
+    - mastodon-web
+    - mastodon-sidekiq
+    - mastodon-streaming
+  vars:
+    service_state: "{{ 'restarted' if clone_mastodon_repo.changed or set_production_config.changed else 'started' }}"

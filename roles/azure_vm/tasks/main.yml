@@ -1,0 +1,125 @@
+---
+# 参照: https://docs.microsoft.com/ja-jp/cli/azure/install-azure-cli#linux-prerequisites
+- block:
+    - name: Azure CLIの依存ライブラリをインストール(Debian系)
+      apt:
+        name:
+          - libssl-dev
+          - libffi-dev
+          - python-dev
+          - build-essential
+          - python-pip
+      when: ansible_os_family == 'Debian'
+
+    - block:
+        - name: Azure CLIの依存ライブラリをインストール(RedHat系)
+          yum:
+            name:
+              - gcc
+              - libffi-devel
+              - python-devel
+              - openssl-devel
+              - epel-release
+
+        - name: Pipをインストール(RedHat系)
+          yum:
+            name: python-pip
+      when: ansible_os_family == 'RedHat'
+
+    - name: Virtualenvをインストール
+      pip:
+        name: virtualenv
+  become: true
+
+- name: Azure CLIをインストール
+  pip:
+    name: azure-cli
+    virtualenv: ~/venv/azure-cli
+
+- block:
+    - name: Azure Service Principle情報を変数に格納
+      set_fact:
+        azure_service_principle: "{{ lookup('file', '{{ playbook_dir }}/resources/azure-sp.json') }}"
+  rescue:
+    - debug:
+        msg:
+          - Service Principle情報が存在しません、以下の3コマンドを順に実行してからPlaybookを再実行してください。
+          - "source {{ azure_cli_venv_dir }}/bin/activate"
+          - "az login"
+          - "az ad sp create-for-rbac -n http://ansible-demo --role contributor > {{ playbook_dir }}/azure-sp.json"
+    - fail:
+
+- name: Azure CLI設定保持用一時ディレクトリを作成
+  tempfile:
+    state: directory
+    suffix: .azure.config
+  register: azure_config_temp_dir
+
+- block:
+    - name: Service PrincipleでAzure CLIにログイン
+      command: "{{ azure_cli }} login --service-principal
+        -u {{ azure_service_principle.name }}
+        -p {{ azure_service_principle.password }}
+        --tenant {{ azure_service_principle.tenant }}"
+
+    - name: リソースグループの存在確認
+      command: "{{ azure_cli }} group show -n {{ azure_resource_group_name }}"
+      register: show_group
+      changed_when: false
+
+    - name: リソースグループを作成
+      command: "{{ azure_cli }} group create -n {{ azure_resource_group_name }} -l {{ azure_region }}"
+      when: not show_group.stdout
+
+    - name: 可用性セット存在確認
+      command: "{{ azure_cli }} vm availability-set show -g {{ azure_resource_group_name }} -n {{ azure_availability_set_name }}"
+      register: show_availability_set
+      changed_when: false
+
+    - name: 可用性セットを作成
+      command: "{{ azure_cli }} vm availability-set create -g {{ azure_resource_group_name }} -n {{ azure_availability_set_name }}"
+      when: not show_availability_set.stdout
+
+    - name: VM存在確認
+      command: "{{ azure_cli }} vm show -g {{ azure_resource_group_name }} -n {{ azure_vm_name }}"
+      register: show_vm
+      changed_when: false
+
+    - block:
+        - name: VMを作成
+          command: "{{ azure_cli }} vm create -g '{{ azure_resource_group_name }}' -n '{{ azure_vm_name }}'
+            --image {{ azure_vm_image }} --size {{ azure_vm_size }} --availability-set {{ azure_availability_set_name }} --admin-username {{ azure_vm_admin_name }} --generate-ssh-keys"
+
+        - name: 作成後VM情報を取得
+          command: "{{ azure_cli }} vm show -g {{ azure_resource_group_name }} -n {{ azure_vm_name }}"
+          register: vm_info
+          changed_when: false
+      when: not show_vm.stdout
+
+    - name: VM情報を変数に格納
+      set_fact:
+        azure_vm_info: "{{ (show_vm.stdout or vm_info.stdout)|from_json }}"
+
+    - name: NIC情報を取得
+      command: "{{ azure_cli }} network nic show --ids {{ azure_vm_info.networkProfile.networkInterfaces[0].id }}"
+      register: show_nic
+      changed_when: false
+
+    - name: NIC情報を変数に格納
+      set_fact:
+        azure_nic_info: "{{ show_nic.stdout|from_json }}"
+
+    - name: Public IP情報を取得
+      command: "{{ azure_cli }} network public-ip show --ids {{ azure_nic_info.ipConfigurations[0].publicIpAddress.id }}"
+      register: show_public_ip
+      changed_when: false
+
+    - name: Public IP情報を変数に格納
+      set_fact:
+          azure_public_ip_info: "{{ show_public_ip.stdout|from_json }}"
+
+    - include: open_port.yml
+      with_items: "{{ azure_allowed_ports }}"
+
+  environment:
+    AZURE_CONFIG_DIR: "{{ azure_config_temp_dir.path }}"

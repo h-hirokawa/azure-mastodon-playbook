@@ -1,0 +1,13 @@
+---
+- name: "{{ item }}.serviceのsystemd設定ファイルをコピー"
+  template:
+    src: "{{ item }}.service"
+    dest: "/etc/systemd/system/{{ item }}.service"
+  register: set_systemd_config
+
+- name: "{{ item }}.serviceの起動と自動起動有効化"
+  systemd:
+    name: "{{ item }}.service"
+    state: "{{ 'restarted' if set_systemd_config.changed else service_state }}"
+    daemon_reload: "{{ True if set_systemd_config.changed else False }}"
+    enabled: true

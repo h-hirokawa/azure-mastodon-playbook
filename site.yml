@@ -1,0 +1,87 @@
+- name: Azure CLI 2.0を使ってMastodon用VMを作成
+  hosts: localhost
+  tags:
+    - always
+  roles:
+    - role: azure_vm
+      vars:
+        azure_resource_group_name: AnsibleMastodonDemo
+        azure_availability_set_name: MastodonAS1
+        azure_vm_name: MastodonInstance
+        azure_vm_admin_name: mastodonAdmin
+        azure_allowed_ports:
+          - name: http
+            priority: 1010
+            port: 80
+  post_tasks:
+    - name: VM接続情報をAnsible操作対象ホストに追加
+      add_host:
+        name: mastodon-instance
+        groups: mastodon
+        ansible_host: "{{ azure_public_ip_info.ipAddress }}"
+        ansible_user: "{{ azure_vm_info.osProfile.adminUsername }}"
+
+- name: VM内にMastodonをセットアップ
+  hosts: mastodon
+  become: true
+  vars:
+    db_name: mastodon
+    db_password: mastodonPassword
+    mastodon_user: mastodon
+  roles:
+    - role: geerlingguy.postgresql
+      vars:
+        postgresql_databases:
+          - name: "{{ db_name }}"
+        postgresql_users:
+          - name: "{{ mastodon_user }}"
+            password: "{{ db_password }}"
+
+    - role: geerlingguy.redis
+
+    - role: geerlingguy.nodejs
+      vars:
+        nodejs_version: "8.x"
+        nodejs_npm_global_packages:
+          - name: yarn
+
+    - role: zzet.rbenv
+      vars:
+        rbenv:
+          env: system
+          version: v1.1.1
+          default_ruby: 2.4.1
+          rubies:
+            - version: 2.4.1
+              env:
+                RUBY_CONFIGURE_OPTS: "--enable-shared"
+
+    - role: mastodon
+      vars:
+        mastodon_postgresql_name: mastodon
+        mastodon_postgresql_password: demoInsecurePassword
+        mastodon_ruby_path: "{{ rbenv_root }}/shims"
+        mastodon_yarn_path: "{{ npm_config_prefix }}/bin"
+        # 以下、ハンズオン専用SMTPサーバ情報。期間外は利用不可。
+        mastodon_smtp_server: smtp.sendgrid.net
+        mastodon_smtp_login: apikey
+        mastodon_smtp_password: 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
+      tags:
+        - mastodon
+
+    - role: geerlingguy.nginx
+      vars:
+        nginx_vhosts:
+          # 現時点ではrole_pathを使ってのRole間パス参照は使えない。参考: https://github.com/ansible/ansible/issues/10374
+          - template: "{{ playbook_dir }}/templates/mastodon.nginx.conf"
+            filename: mastodon.conf
+            mastodon_dir: "{{ mastodon_directory }}"
+            server_name: "{{ ansible_host }}"
+      tags:
+        - mastodon
+  post_tasks:
+    - name: サイト情報を表示
+      debug:
+        msg:
+          - デプロイが完了しました。
+          - ブラウザから http://{{ ansible_host }} にアクセスしてみましょう

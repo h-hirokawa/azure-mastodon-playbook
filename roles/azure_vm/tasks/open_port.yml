@@ -1,0 +1,12 @@
+---
+- name: "{{ item.name }}ポート開放状況確認"
+  command: "{{ azure_cli }} network nsg rule show -g {{ azure_resource_group_name }}
+    --nsg-name {{ azure_nic_info.networkSecurityGroup.id.split('/')[-1] }} -n default-allow-{{ item.name }}"
+  register: show_nsg_rule
+  changed_when: false
+
+- name: "{{ item.name }}ポートを開放"
+  command: "{{ azure_cli }} network nsg rule create -g {{ azure_resource_group_name }}
+    --nsg-name {{ azure_nic_info.networkSecurityGroup.id.split('/')[-1] }} -n default-allow-{{ item.name }}
+    --priority {{ item.priority }} --destination-port-range {{ item.port }}"
+  when: not show_nsg_rule.stdout
