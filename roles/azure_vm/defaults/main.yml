@@ -8,4 +8,4 @@ azure_vm_name:
 
 azure_vm_image: ubuntults
 azure_vm_size: Standard_DS2_v2
-azure_region: japaneast
+azure_region: centralus
