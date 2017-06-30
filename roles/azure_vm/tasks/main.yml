@@ -46,7 +46,7 @@
           - Service Principle情報が存在しません、以下の3コマンドを順に実行してからPlaybookを再実行してください。
           - "source {{ azure_cli_venv_dir }}/bin/activate"
           - "az login"
-          - "az ad sp create-for-rbac -n http://ansible-demo --role contributor > {{ playbook_dir }}/azure-sp.json"
+          - "az ad sp create-for-rbac -n http://ansible-demo --role contributor > {{ playbook_dir }}/resources/azure-sp.json"
     - fail:
 
 - name: Azure CLI設定保持用一時ディレクトリを作成

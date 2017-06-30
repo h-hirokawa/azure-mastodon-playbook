@@ -26,6 +26,7 @@ dist=$(get_os_distribution)
 case ${dist} in
 debian)
     sudo apt-get update && sudo apt-get install -y build-essential libssl-dev libffi-dev python-dev curl
+    sudo update-locale LANG=en_US.UTF-8 LANGUAGE=
     ;;
 redhat)
     sudo yum install -y gcc libffi-devel python-devel openssl-devel curl

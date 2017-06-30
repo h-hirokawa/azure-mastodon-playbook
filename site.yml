@@ -8,7 +8,7 @@
         azure_resource_group_name: AnsibleMastodonDemo
         azure_availability_set_name: MastodonAS1
         azure_vm_name: MastodonInstance
-        azure_vm_admin_name: mastodonAdmin
+        azure_vm_admin_name: mastodon-admin
         azure_allowed_ports:
           - name: http
             priority: 1010
