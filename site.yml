@@ -62,10 +62,10 @@
         mastodon_postgresql_password: "{{ db_password }}"
         mastodon_ruby_path: "{{ rbenv_root }}/shims"
         mastodon_yarn_path: "{{ npm_config_prefix }}/bin"
-        # 以下、ハンズオン専用SMTPサーバ情報。期間外は利用不可。
+        # 以下、ハンズオン用SMTPサーバ情報。
         mastodon_smtp_server: smtp.sendgrid.net
         mastodon_smtp_login: apikey
-        mastodon_smtp_password: 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
+        mastodon_smtp_password: ###ここにAPIキーをペーストする###
       tags:
         - mastodon
 
@@ -85,3 +85,5 @@
         msg:
           - デプロイが完了しました。
           - ブラウザから http://{{ ansible_host }} にアクセスしてみましょう
+      tags:
+        - mastodon

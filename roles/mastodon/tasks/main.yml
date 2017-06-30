@@ -33,7 +33,7 @@
   become_user: root
 
 - block:
-    - name: Mastodonリポジトリをクローン
+    - name: Mastodonリポジトリをチェックアウト
       git:
         dest: "{{ mastodon_directory }}"
         repo: "{{ mastodon_git_repo }}"

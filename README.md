@@ -155,7 +155,47 @@ ansible-playbook ./site.yml
 ```
 
 を実行して、デプロイ完了までしばらく待ちましょう。
-無事、デプロイが正常に完了すると、実行ログの終わりに以下のようなメッセージが表示されます。
+
+
+### IV. SendGridアカウント作成
+デプロイ完了までにはある程度の時間がかかるので、その間にMastodonからメールを送信できるようにしていきましょう。
+Azureではセキュリティの観点からVM上から直接メールを送信することができませんので、Azure上から簡単に無料アカウントを発行できるSendGridを使ってメールを送信できるようにしてみます。
+
+#### 1. Azure PortalからSendGridリソースを作成
+ブラウザで[Azure Portal](https://portal.azure.com) を開き、左メニューバー上部の「+」ボタンをクリック、検索ウィンドウに "SendGrid" と入力、「SendGrid Email Delivery」リソースを作成してください。
+特に決まりはありませんが、名前は「MySendGrid」、リソースグループは新規作成で「SendGrid」などが良いでしょう。
+Pricing tierは無料の「F1」を選択してください。
+
+#### 2. SendGridダッシュボードにログイン
+リソースが作成できたら、ポータル画面から「MySendGrid」を開き、「すべての設定」→「Configurations」内の `USERNAME` をコピーしましょう。
+
+次に、 https://app.sendgrid.com/login を開き、コピーした `USERNAME` とリソース作成時に入力したパスワードでログインします
+
+#### 3. APIキーを作成
+SendGridのダッシュボードに入ったら、左メニューバー下部の「Settings」→「API Keys」をクリックし、API Keys画面へ遷移、右上の「Create API Key」をクリックしましょう。
+
+APIキー作成画面では、API Key Nameは「MastodonDemo」と入力、API Key Permissions は「Restricted Access」を選択し、「Mail Send」のバーの右端をクリックし「Full Access」状態にします。
+ここで「Create & View」をクリックすると、作成完了画面にAPIキーが表示されます。
+このAPIキーをコピーして、[site.yml](./site.yml) 中の68行目、`###ここにAPIキーをペーストする###` の部分に貼り付けましょう。
+
+```yaml
+        # 以下、ハンズオン用SMTPサーバ情報。
+        mastodon_smtp_server: smtp.sendgrid.net
+        mastodon_smtp_login: apikey
+        mastodon_smtp_password: ###ここにAPIキーをペーストする###
+```
+
+### V. 最終デプロイ + 動作確認
+ここまでの作業が完了したら、一旦、Playbook実行完了まで待ちましょう。
+Playbook実行完了時点でMastodonは起動状態になっていますが、`mastodon_smtp_password` の設定がまだ反映されていない状態ですので、最後にもう一度Playbookを実行します。
+
+```bash
+ansible-playbook --tags=mastodon ./site.yml
+```
+
+`--tags` に `mastodon` と指定すると、ミドルウェア系のセットアップをスキップし、短時間でPlaybookの実行を完了させることができます。
+
+デプロイが正常に完了すると、実行ログの終わりに以下のようなメッセージが表示されます。
 
 ```
 TASK [サイト情報を表示] *****************************************************************************************************************************
@@ -168,16 +208,4 @@ ok: [localhost] => {
 ```
 
 `http://xx.xx.xx.xx` の部分は各自のVMに自動で紐づけられた公開IPアドレスになります。
-
-最後に、Mastodonインスタンスが表示されユーザー登録とログインができることを確認して、ハンズオン完了です！
-
-注意: ユーザー登録時の確認メールはデモ用のSendGrid(https://sendgrid.kke.co.jp)経由で送られており、ハンズオン終了後には利用できなくなります。引き続きデプロイしたMastodonインスタンスを使う場合は、[site.yml](./site.yml) 中の66~68行目
-
-```yaml
-        mastodon_smtp_server: smtp.sendgrid.net
-        mastodon_smtp_login: apikey
-        mastodon_smtp_password: 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
-```
-
-の部分を自分のアカウント情報に書き換えて、Playbookを再実行してください。
-無料でSMTPメールを送れるサービスとしては、SendGridの他に [MailGun](https://www.mailgun.com) などがあります。
+最後に、Mastodonインスタンスが表示されユーザー登録とログインができることを確認したら、ハンズオンは完了です！
