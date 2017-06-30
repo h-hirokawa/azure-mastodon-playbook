@@ -161,6 +161,8 @@ ansible-playbook ./site.yml
 デプロイ完了までにはある程度の時間がかかるので、その間にMastodonからメールを送信できるようにしていきましょう。
 Azureではセキュリティの観点からVM上から直接メールを送信することができませんので、Azure上から簡単に無料アカウントを発行できるSendGridを使ってメールを送信できるようにしてみます。
 
+詳細手順: https://docs.microsoft.com/ja-jp/azure/app-service-web/sendgrid-dotnet-how-to-send-email
+
 #### 1. Azure PortalからSendGridリソースを作成
 ブラウザで[Azure Portal](https://portal.azure.com) を開き、左メニューバー上部の「+」ボタンをクリック、検索ウィンドウに "SendGrid" と入力、「SendGrid Email Delivery」リソースを作成してください。
 特に決まりはありませんが、名前は「MySendGrid」、リソースグループは新規作成で「SendGrid」などが良いでしょう。
