@@ -62,7 +62,7 @@
         mastodon_postgresql_password: "{{ db_password }}"
         mastodon_ruby_path: "{{ rbenv_root }}/shims"
         mastodon_yarn_path: "{{ npm_config_prefix }}/bin"
-        # 以下、ハンズオン用SMTPサーバ情報。
+        # 以下、ハンズオン用SendGrid SMTPサーバ情報。
         mastodon_smtp_server: smtp.sendgrid.net
         mastodon_smtp_login: apikey
         mastodon_smtp_password: ###ここにAPIキーをペーストする###
@@ -80,6 +80,12 @@
       tags:
         - mastodon
   post_tasks:
+    - name: SMTP用APIキー未設定時メッセージ
+      debug:
+        msg: mastodon_smtp_password が未設定のため、Mastodonからのメール送信ができません
+      when: not mastodon_smtp_password
+      tags:
+        - mastodon
     - name: サイト情報を表示
       debug:
         msg:

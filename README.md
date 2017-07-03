@@ -146,7 +146,7 @@ az ad sp create-for-rbac -n http://ansible-demo --role contributor > /vagrant/az
 を実行して、Service Principleを作成すればここでの対応は完了です。
 Service Principleの利用に必要なIDやパスワードは `/vagrant/azure-mastodon-playbook/resources/azure-sp.json` に保存され、Playbookから読み取り可能になっています。
 
-### III. Playbook再実行 VM作成 ~ Mastodonインスタンス・セットアップ
+## III. Playbook再実行 VM作成 ~ Mastodonインスタンス・セットアップ
 Service Principleの設定が済んでしまえば、あとはVM作成からVM内のセットアップまで、全てPlaybookが実行してくれます。
 先ほどと同じように
 
@@ -157,23 +157,23 @@ ansible-playbook ./site.yml
 を実行して、デプロイ完了までしばらく待ちましょう。
 
 
-### IV. SendGridアカウント作成
+## IV. SendGridアカウント作成
 デプロイ完了までにはある程度の時間がかかるので、その間にMastodonからメールを送信できるようにしていきましょう。
 Azureではセキュリティの観点からVM上から直接メールを送信することができませんので、Azure上から簡単に無料アカウントを発行できるSendGridを使ってメールを送信できるようにしてみます。
 
 詳細手順: https://docs.microsoft.com/ja-jp/azure/app-service-web/sendgrid-dotnet-how-to-send-email
 
-#### 1. Azure PortalからSendGridリソースを作成
+### 1. Azure PortalからSendGridリソースを作成
 ブラウザで[Azure Portal](https://portal.azure.com) を開き、左メニューバー上部の「+」ボタンをクリック、検索ウィンドウに "SendGrid" と入力、「SendGrid Email Delivery」リソースを作成してください。
 特に決まりはありませんが、名前は「MySendGrid」、リソースグループは新規作成で「SendGrid」などが良いでしょう。
 Pricing tierは無料の「F1」を選択してください。
 
-#### 2. SendGridダッシュボードにログイン
+### 2. SendGridダッシュボードにログイン
 リソースが作成できたら、ポータル画面から「MySendGrid」を開き、「すべての設定」→「Configurations」内の `USERNAME` をコピーしましょう。
 
 次に、 https://app.sendgrid.com/login を開き、コピーした `USERNAME` とリソース作成時に入力したパスワードでログインします
 
-#### 3. APIキーを作成
+### 3. APIキーを作成
 SendGridのダッシュボードに入ったら、左メニューバー下部の「Settings」→「API Keys」をクリックし、API Keys画面へ遷移、右上の「Create API Key」をクリックしましょう。
 
 APIキー作成画面では、API Key Nameは「MastodonDemo」と入力、API Key Permissions は「Restricted Access」を選択し、「Mail Send」のバーの右端をクリックし「Full Access」状態にします。
@@ -187,7 +187,7 @@ APIキー作成画面では、API Key Nameは「MastodonDemo」と入力、API K
         mastodon_smtp_password: ###ここにAPIキーをペーストする###
 ```
 
-### V. 最終デプロイ + 動作確認
+## V. 最終デプロイ + 動作確認
 ここまでの作業が完了したら、一旦、Playbook実行完了まで待ちましょう。
 Playbook実行完了時点でMastodonは起動状態になっていますが、`mastodon_smtp_password` の設定がまだ反映されていない状態ですので、最後にもう一度Playbookを実行します。
 
