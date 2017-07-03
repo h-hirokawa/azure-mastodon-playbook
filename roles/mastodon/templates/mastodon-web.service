@@ -7,7 +7,7 @@ Type=simple
 User={{ mastodon_user_name }}
 WorkingDirectory={{ mastodon_directory }}
 Environment="RAILS_ENV=production"
-Environment="PORT=3000"
+Environment="PORT={{ mastodon_local_web_port }}"
 ExecStart={{ mastodon_ruby_path }}/bundle exec puma -C config/puma.rb
 TimeoutSec=15
 Restart=always

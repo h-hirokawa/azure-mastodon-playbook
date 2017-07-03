@@ -28,3 +28,5 @@ mastodon_npm_dir: /usr/bin
 mastodon_user_name: mastodon
 mastodon_user_home: /home/{{ mastodon_user_name }}
 mastodon_directory: /home/{{ mastodon_user_name }}/live
+
+mastodon_local_web_port: 3000

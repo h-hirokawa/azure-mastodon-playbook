@@ -79,12 +79,19 @@
       command: bundle exec rails assets:precompile
       args:
         chdir: "{{ mastodon_directory }}"
-      when: clone_mastodon_repo.changed
+      tags:
+        - mastodon-precompile-assets
   environment:
     RAILS_ENV: production
     PATH: "{{ mastodon_ruby_path }}:{{ mastodon_yarn_path }}:{{ ansible_env.PATH }}"
   become: true
   become_user: "{{ mastodon_user_name }}"
+
+- name: Mastodonサービス稼働状態を確認
+  uri:
+    url: "http://127.0.0.1:{{ mastodon_local_web_port }}"
+  ignore_errors: true
+  register: check_mastodon_service_condition
 
 - include: start_service.yml
   become: true
@@ -94,4 +101,4 @@
     - mastodon-sidekiq
     - mastodon-streaming
   vars:
-    service_state: "{{ 'restarted' if clone_mastodon_repo.changed or set_production_config.changed else 'started' }}"
+    service_state: "{{ 'restarted' if clone_mastodon_repo|changed or set_production_config|changed or check_mastodon_service_condition|failed else 'started' }}"
